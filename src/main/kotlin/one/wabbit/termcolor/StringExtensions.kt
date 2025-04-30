@@ -1,0 +1,18 @@
+package one.wabbit.termcolor
+
+fun String.red(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.ForegroundColor.Red)
+fun String.green(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.ForegroundColor.Green)
+fun String.blue(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.ForegroundColor.Blue)
+fun String.yellow(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.ForegroundColor.Yellow)
+fun String.magenta(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.ForegroundColor.Magenta)
+fun String.cyan(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.ForegroundColor.Cyan)
+fun String.white(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.ForegroundColor.White)
+fun String.black(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.ForegroundColor.Black)
+fun String.bgRed(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.BackgroundColor.Red)
+fun String.bgGreen(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.BackgroundColor.Green)
+fun String.bgBlue(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.BackgroundColor.Blue)
+fun String.bgYellow(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.BackgroundColor.Yellow)
+fun String.bgMagenta(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.BackgroundColor.Magenta)
+fun String.bgCyan(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.BackgroundColor.Cyan)
+fun String.bgWhite(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.BackgroundColor.White)
+fun String.bgBlack(): AnsiStyledString = AnsiStyledString(this).decorate(AnsiStyle.BackgroundColor.Black)
