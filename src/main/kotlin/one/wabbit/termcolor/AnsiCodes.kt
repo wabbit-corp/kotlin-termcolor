@@ -9,7 +9,7 @@ object AnsiCodes {
     const val MAGENTA    = "\u001b[35m"
     const val CYAN       = "\u001b[36m"
     const val WHITE      = "\u001b[37m"
-    
+
     const val BLACK_B    = "\u001b[40m"
     const val RED_B      = "\u001b[41m"
     const val GREEN_B    = "\u001b[42m"
