@@ -1,45 +1,39 @@
 package one.wabbit.termcolor
 
-import java.util.*
+import java.util.Arrays
 
 typealias EncodedAnsiStyle = Long
 
 /**
  * Represents a string with associated ANSI colors and text decorations.
  *
- * The [AnsiStyledString] class is the primary data type for working with colored strings.
- * It provides methods for manipulating and rendering the string with ANSI escape codes.
+ * The [AnsiStyledString] class is the primary data type for working with colored strings. It
+ * provides methods for manipulating and rendering the string with ANSI escape codes.
  *
  * @property chars The character array representing the string.
  * @property colors The color array representing the colors associated with each character.
  */
-class AnsiStyledString internal constructor(private val chars: CharArray, private val colors: LongArray) {
+class AnsiStyledString
+internal constructor(private val chars: CharArray, private val colors: LongArray) {
     init {
         require(chars.size == colors.size)
     }
 
     /**
-     * An [AnsiStyledString]'s `color`s array is filled with Long, each representing
-     * the ANSI state of one character encoded in its bits. Each [AnsiStyle] belongs
-     * to a [AnsiStyle.Category] that occupies a range of bits within each long:
+     * An [AnsiStyledString]'s `color`s array is filled with Long, each representing the ANSI state
+     * of one character encoded in its bits. Each [AnsiStyle] belongs to a [AnsiStyle.Category] that
+     * occupies a range of bits within each long:
      *
-     * 61... 55 54  53 52 51 .... 31 30 29 28  27 26 25 ..... 6  5  4  3  2  1  0
-     *  |--------|  |-----------------------|  |-----------------------|  |  |  |bold
-     *           |                          |                          |  |  |reversed
-     *           |                          |                          |  |underlined
-     *           |                          |                          |foreground-color
-     *           |                          |background-color
-     *           |unused
-     *
+     * 61... 55 54 53 52 51 .... 31 30 29 28 27 26 25 ..... 6 5 4 3 2 1 0 |--------|
+     * |-----------------------| |-----------------------| | | |bold | | | | |reversed | | |
+     * |underlined | | |foreground-color | |background-color |unused
      *
      * The `0000 0000 0000 0000` long corresponds to plain text with no decoration
-     *
      */
 
-    /**
-     * Returns the plain-text length of the string.
-     */
-    val length: Int get() = chars.size
+    /** Returns the plain-text length of the string. */
+    val length: Int
+        get() = chars.size
 
     /**
      * Returns the plain-text representation of this string without ANSI escape codes.
@@ -78,13 +72,14 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
      */
     fun charAt(i: Int): Char = chars[i]
 
-    override fun hashCode(): Int =
-        chars.contentHashCode() * 31 + colors.contentHashCode()
+    override fun hashCode(): Int = chars.contentHashCode() * 31 + colors.contentHashCode()
 
-    override fun equals(other: Any?): Boolean = when (other) {
-        is AnsiStyledString -> chars.contentEquals(other.chars) && colors.contentEquals(other.colors)
-        else -> false
-    }
+    override fun equals(other: Any?): Boolean =
+        when (other) {
+            is AnsiStyledString ->
+                chars.contentEquals(other.chars) && colors.contentEquals(other.colors)
+            else -> false
+        }
 
     /**
      * Concatenates this string with another string.
@@ -109,11 +104,17 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
      * @return A pair of strings representing the substrings before and after the split index.
      */
     fun splitAt(index: Int): Pair<AnsiStyledString, AnsiStyledString> {
-        require(index in 0..length) {
-            "split index [$index] must be between 0 and length:$length"
-        }
-        val left = AnsiStyledString(Arrays.copyOfRange(chars, 0, index), Arrays.copyOfRange(colors, 0, index))
-        val right = AnsiStyledString(Arrays.copyOfRange(chars, index, length), Arrays.copyOfRange(colors, index, length))
+        require(index in 0..length) { "split index [$index] must be between 0 and length:$length" }
+        val left =
+            AnsiStyledString(
+                Arrays.copyOfRange(chars, 0, index),
+                Arrays.copyOfRange(colors, 0, index),
+            )
+        val right =
+            AnsiStyledString(
+                Arrays.copyOfRange(chars, index, length),
+                Arrays.copyOfRange(colors, index, length),
+            )
         return Pair(left, right)
     }
 
@@ -131,22 +132,25 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
         require(end in start..length) {
             "substring end parameter [$end] must be between start $start and length:$length"
         }
-        return AnsiStyledString(Arrays.copyOfRange(chars, start, end), Arrays.copyOfRange(colors, start, end))
+        return AnsiStyledString(
+            Arrays.copyOfRange(chars, start, end),
+            Arrays.copyOfRange(colors, start, end),
+        )
     }
 
     /**
      * Renders this string with ANSI escape codes.
      *
-     * @return The string with ANSI escape codes included.
-     *         Safe to print to a terminal and concatenate with plain strings.
+     * @return The string with ANSI escape codes included. Safe to print to a terminal and
+     *   concatenate with plain strings.
      */
     override fun toString(): String = render()
 
     /**
      * Renders this string with ANSI escape codes.
      *
-     * @return The string with ANSI escape codes included.
-     *         Safe to print to a terminal and concatenate with plain strings.
+     * @return The string with ANSI escape codes included. Safe to print to a terminal and
+     *   concatenate with plain strings.
      */
     fun render(): String {
         // Pre-size StringBuilder with approximate size (ansi colors tend
@@ -178,7 +182,6 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
         return output.toString()
     }
 
-
     /**
      * Overlays the specified attributes onto a range of the string.
      *
@@ -194,9 +197,9 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
         decorate(listOf(range to attrs))
 
     /**
-     * Batch version of [overlays], letting you apply a bunch of [AnsiStyle] onto
-     * various parts of the same string in one operation, avoiding the unnecessary
-     * copying that would happen if you applied them with [overlays] one by one.
+     * Batch version of [overlays], letting you apply a bunch of [AnsiStyle] onto various parts of
+     * the same string in one operation, avoiding the unnecessary copying that would happen if you
+     * applied them with [overlays] one by one.
      *
      * The input sequence of overlay-tuples is applied from left to right
      */
@@ -208,7 +211,9 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
             val end = range.last + 1
             require(end >= start) { "end:$end must be greater than start:$start in overlay call" }
             require(start >= 0) { "start:$start must be greater than or equal to 0" }
-            require(end <= colors.size) { "end:$end must be less than or equal to length:${colors.size}" }
+            require(end <= colors.size) {
+                "end:$end must be less than or equal to length:${colors.size}"
+            }
 
             var i = start
             while (i < end) {
@@ -220,48 +225,49 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
     }
 
     /**
-     * Used to control what kind of behavior you get if a `CharSequence` you
-     * are trying to parse into a [[AnsiStyledString]] contains an Ansi escape not
-     * recognized as a valid color.
+     * Used to control what kind of behavior you get if a `CharSequence` you are trying to parse
+     * into a [[AnsiStyledString]] contains an Ansi escape not recognized as a valid color.
      */
     sealed interface ErrorMode {
         /**
-         * Given an unknown Ansi escape was found at `sourceIndex` inside your
-         * `raw: CharSequence`, what index should you resume parsing at?
+         * Given an unknown Ansi escape was found at `sourceIndex` inside your `raw: CharSequence`,
+         * what index should you resume parsing at?
          */
-        fun handle(sourceIndex: Int, raw: CharSequence): Int = when (this) {
-            is Throw -> {
-                val match = ansiRegex.find(raw, sourceIndex)
-                val detail =
-                    if (match == null) ""
-                    else {
-                        val end = match.range.last + 1
-                        " " + raw.subSequence(sourceIndex + 1, end)
-                    }
+        fun handle(sourceIndex: Int, raw: CharSequence): Int =
+            when (this) {
+                is Throw -> {
+                    val match = ansiRegex.find(raw, sourceIndex)
+                    val detail =
+                        if (match == null) {
+                            ""
+                        } else {
+                            val end = match.range.last + 1
+                            " " + raw.subSequence(sourceIndex + 1, end)
+                        }
 
-                throw IllegalArgumentException(
-                    "Unknown ansi-escape$detail at index $sourceIndex " +
-                            "inside string cannot be parsed into an Str")
+                    throw IllegalArgumentException(
+                        "Unknown ansi-escape$detail at index $sourceIndex " +
+                            "inside string cannot be parsed into an Str"
+                    )
+                }
+                is Sanitize -> sourceIndex + 1
+                is Strip ->
+                    ansiRegex.find(raw, sourceIndex)?.range?.last?.let { it + 1 } ?: raw.length
             }
-            is Sanitize -> sourceIndex + 1
-            is Strip -> ansiRegex.find(raw, sourceIndex)?.range?.last?.let { it + 1 } ?: raw.length
-        }
 
-        /**
-         * Throw an exception and abort the parse
-         */
+        /** Throw an exception and abort the parse */
         data object Throw : ErrorMode
 
         /**
-         * Skip the `\u001b` that kicks off the unknown Ansi escape but leave
-         * subsequent characters in place, so the end-user can see that an Ansi
-         * escape was entered e.g. via the [A[B[A[C that appears in the result
+         * Skip the `\u001b` that kicks off the unknown Ansi escape but leave subsequent characters
+         * in place, so the end-user can see that an Ansi escape was entered e.g. via the [A[B[A[C
+         * that appears in the result
          */
         data object Sanitize : ErrorMode
 
         /**
-         * Find the end of the unknown Ansi escape and skip over its characters
-         * entirely, so no trace of them appear in the parsed Str.
+         * Find the end of the unknown Ansi escape and skip over its characters entirely, so no
+         * trace of them appear in the parsed Str.
          */
         data object Strip : ErrorMode
     }
@@ -270,20 +276,21 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
         val empty = AnsiStyledString("")
 
         /**
-         * Make the construction of [[AnsiStyledString]]s from `String`s and other
-         * `CharSequence`s automatic
+         * Make the construction of [[AnsiStyledString]]s from `String`s and other `CharSequence`s
+         * automatic
          */
         operator fun invoke(raw: CharSequence): AnsiStyledString = parse(raw)
-        operator fun invoke(vararg raw: CharSequence): AnsiStyledString = parse(raw.joinToString(separator = "") { it })
+
+        operator fun invoke(vararg raw: CharSequence): AnsiStyledString =
+            parse(raw.joinToString(separator = "") { it })
 
         operator fun invoke(vararg args: AnsiStyledString): AnsiStyledString = join(args.toList())
 
         /**
-         * Regex that can be used to identify Ansi escape patterns in a string.
-         * Found from: http://stackoverflow.com/a/33925425/871202
-         * Which references:
-         * http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-048.pdf
-         * Section 5.4: Control Sequences
+         * Regex that can be used to identify Ansi escape patterns in a string. Found from:
+         * http://stackoverflow.com/a/33925425/871202 Which references:
+         * http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-048.pdf Section 5.4:
+         * Control Sequences
          */
         private val ansiRegex = Regex("(\u009b|\u001b\\[)[0-?]*[ -\\/]*[@-~]")
 
@@ -294,8 +301,8 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
         fun parseSanitized(raw: CharSequence) = parse(raw, ErrorMode.Sanitize)
 
         /**
-         * Parses a string with ANSI escape codes and returns a new string
-         * with the invalid codes stripped.
+         * Parses a string with ANSI escape codes and returns a new string with the invalid codes
+         * stripped.
          *
          * @param raw The string to parse.
          * @return A new string with ANSI escape codes stripped.
@@ -303,8 +310,8 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
         fun parseStripped(raw: CharSequence) = parse(raw, ErrorMode.Strip)
 
         /**
-         * Parses a string with ANSI escape codes and returns a new string,
-         * throwing an exception if an invalid code is encountered.
+         * Parses a string with ANSI escape codes and returns a new string, throwing an exception if
+         * an invalid code is encountered.
          *
          * @param raw The string to parse.
          * @return A new string with ANSI escape codes parsed.
@@ -313,16 +320,14 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
         fun parseOrThrow(raw: CharSequence) = parse(raw, ErrorMode.Throw)
 
         /**
-         * Creates an [AnsiStyledString] from a [kotlin.String] or other
-         * [CharSequence].
+         * Creates an [AnsiStyledString] from a [kotlin.String] or other [CharSequence].
          *
-         * Note that this method is implicit, meaning you can pass in a
-         * [kotlin.String] anywhere an [AnsiStyledString] is required, and it will be
-         * automatically parsed and converted for you.
+         * Note that this method is implicit, meaning you can pass in a [kotlin.String] anywhere an
+         * [AnsiStyledString] is required, and it will be automatically parsed and converted for
+         * you.
          *
-         * @param errorMode Used to control what kind of behavior you get if the
-         *                  input `CharSequence` contains an Ansi escape not
-         *                  recognized as a valid color.
+         * @param errorMode Used to control what kind of behavior you get if the input
+         *   `CharSequence` contains an Ansi escape not recognized as a valid color.
          */
         fun parse(raw: CharSequence, errorMode: ErrorMode = ErrorMode.Throw): AnsiStyledString {
             // Pre-allocate some arrays for us to fill up. They will probably be
@@ -373,11 +378,14 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
 
                         fun isDigit(index: Int) =
                             index < raw.length && raw[index] >= '0' && raw[index] <= '9'
+
                         fun checkChar(index: Int, char: Char) =
                             index < raw.length && raw[index] == char
+
                         fun fail() {
                             sourceIndex = errorMode.handle(escapeStartSourceIndex, raw)
                         }
+
                         fun getNumber(): Int {
                             var value = 0
                             var count = 0
@@ -440,12 +448,16 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
                         // calling `True` which instantiates/allocaties an `Attr`
                         currentColor =
                             (currentColor and category.mask.inv()) or
-                            ((TRUECOLOR_BASE_OFFSET + category.trueIndex(r, g, b)) shl category.offset)
+                                ((TRUECOLOR_BASE_OFFSET + category.trueIndex(r, g, b)) shl
+                                    category.offset)
                     }
                 }
             }
 
-            return AnsiStyledString(Arrays.copyOfRange(chars, 0, destIndex), Arrays.copyOfRange(colors, 0, destIndex))
+            return AnsiStyledString(
+                Arrays.copyOfRange(chars, 0, destIndex),
+                Arrays.copyOfRange(colors, 0, destIndex),
+            )
         }
 
         /**
@@ -465,7 +477,10 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
          * @param sep The separator string to use between the joined strings.
          * @return A new string that is the concatenation of the input strings with the separator.
          */
-        fun join(args: Iterable<AnsiStyledString>, sep: AnsiStyledString = empty): AnsiStyledString {
+        fun join(
+            args: Iterable<AnsiStyledString>,
+            sep: AnsiStyledString = empty,
+        ): AnsiStyledString {
             if (args.none()) return empty
 
             val totalLength = args.sumOf { it.length + sep.length } - sep.length
@@ -491,25 +506,26 @@ class AnsiStyledString internal constructor(private val chars: CharArray, privat
 
         internal sealed interface Either<out A, out B> {
             data class Left<A>(val value: A) : Either<A, Nothing>
+
             data class Right<B>(val value: B) : Either<Nothing, B>
         }
 
         internal val ParseMap: Trie<Either<AnsiStyle, AnsiStyle.ColorCategory>> = run {
-            val pairs = AnsiStyle.categories.flatMap { cat ->
-                cat.all.mapNotNull { color ->
-                    val str = color.escapeOpt ?: return@mapNotNull null
-                    str to Either.Left(color)
+            val pairs =
+                AnsiStyle.categories.flatMap { cat ->
+                    cat.all.mapNotNull { color ->
+                        val str = color.escapeOpt ?: return@mapNotNull null
+                        str to Either.Left(color)
+                    }
                 }
-            }
 
-            val reset = listOf(
-                AnsiCodes.RESET to Either.Left(AnsiStyle.Reset)
-            )
+            val reset = listOf(AnsiCodes.RESET to Either.Left(AnsiStyle.Reset))
 
-            val trueColors = listOf(
-                "\u001b[38;2;" to Either.Right(AnsiStyle.ForegroundColor),
-                "\u001b[48;2;" to Either.Right(AnsiStyle.BackgroundColor)
-            )
+            val trueColors =
+                listOf(
+                    "\u001b[38;2;" to Either.Right(AnsiStyle.ForegroundColor),
+                    "\u001b[48;2;" to Either.Right(AnsiStyle.BackgroundColor),
+                )
 
             return@run Trie(pairs + reset + trueColors)
         }

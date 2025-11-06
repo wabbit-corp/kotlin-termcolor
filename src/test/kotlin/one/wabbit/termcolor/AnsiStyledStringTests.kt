@@ -1,6 +1,10 @@
 package one.wabbit.termcolor
 
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 class AnsiStyledStringTests {
     private inline fun <reified E : Throwable> assertThrows(block: () -> Unit) {
@@ -13,12 +17,19 @@ class AnsiStyledStringTests {
         throw AssertionError("Expected exception of type ${E::class.java}")
     }
 
-    @Test fun `test error modes`() {
+    @Test
+    fun `test error modes`() {
         assertThrows<IllegalArgumentException> {
             AnsiStyledString.parseOrThrow("Invalid\u001b[38;2;xxx")
         }
-        assertEquals("Invalid[38;2;xxx", AnsiStyledString.parseSanitized("Invalid\u001b[38;2;xxx").toString())
-        assertEquals("Invalidxx", AnsiStyledString.parseStripped("Invalid\u001b[38;2;xxx").toString())
+        assertEquals(
+            "Invalid[38;2;xxx",
+            AnsiStyledString.parseSanitized("Invalid\u001b[38;2;xxx").toString(),
+        )
+        assertEquals(
+            "Invalidxx",
+            AnsiStyledString.parseStripped("Invalid\u001b[38;2;xxx").toString(),
+        )
     }
 
     @Test
@@ -36,7 +47,11 @@ class AnsiStyledStringTests {
         // For a minimal test, we rely on the underlying library to parse those.
         val raw = "Hello \u001b[31mred\u001b[0m world"
         val parsed = AnsiStyledString.parseOrThrow(raw)
-        assertEquals("Hello red world", parsed.plainText, "Stripping ANSI codes should yield a plain string")
+        assertEquals(
+            "Hello red world",
+            parsed.plainText,
+            "Stripping ANSI codes should yield a plain string",
+        )
         assertEquals(15, parsed.length) // "Hello red world".length == 15
     }
 
@@ -70,12 +85,8 @@ class AnsiStyledStringTests {
         val s = AnsiStyledString("TestString")
         // If splitAt doesn't have an explicit 'require', it might internally cause an exception
         // We'll assert that it does or that it doesn't.
-        assertThrows<IllegalArgumentException> {
-            s.splitAt(-1)
-        }
-        assertThrows<IllegalArgumentException> {
-            s.splitAt(s.length + 10)
-        }
+        assertThrows<IllegalArgumentException> { s.splitAt(-1) }
+        assertThrows<IllegalArgumentException> { s.splitAt(s.length + 10) }
     }
 
     @Test
@@ -99,15 +110,9 @@ class AnsiStyledStringTests {
     @Test
     fun `test substring invalid usage throws`() {
         val s = AnsiStyledString("TestString")
-        assertThrows<IllegalArgumentException> {
-            s.substring(-1, 2)
-        }
-        assertThrows<IllegalArgumentException> {
-            s.substring(0, s.length + 1)
-        }
-        assertThrows<IllegalArgumentException> {
-            s.substring(5, 3)
-        }
+        assertThrows<IllegalArgumentException> { s.substring(-1, 2) }
+        assertThrows<IllegalArgumentException> { s.substring(0, s.length + 1) }
+        assertThrows<IllegalArgumentException> { s.substring(5, 3) }
     }
 
     @Test
@@ -193,7 +198,10 @@ class AnsiStyledStringTests {
         // The invalid code's first \u001b is replaced with nothing, leaving "[48;2;999;0;0mst"
         // The "Te" remains, and the subsequent bracket might appear.
         // Actual result is a bit subtle: we skip just the ESC? Let's just check part:
-        assertTrue(sanitized.plainText.startsWith("Te"), "Should contain the original chars outside the unknown escape")
+        assertTrue(
+            sanitized.plainText.startsWith("Te"),
+            "Should contain the original chars outside the unknown escape",
+        )
         // 3) Strip
         val stripped = AnsiStyledString.parseStripped("Te\u001b[48;2;999;0;0mst")
         assertEquals("Test", stripped.plainText, "Whole unknown code should be removed")
@@ -201,14 +209,17 @@ class AnsiStyledStringTests {
 
     @Test
     fun `test rendering resets state at the end`() {
-        val s = AnsiStyledString("Hello")
-            .decorate(AnsiStyle.Bold.On, 0, 5)
+        val s = AnsiStyledString("Hello").decorate(AnsiStyle.Bold.On, 0, 5)
         val rendered = s.toString()
         // The result should start with some ANSI codes for bold, then "Hello", then a reset
         assertTrue(rendered.contains("Hello"), "Should contain the text itself")
-        // Typically ends with "\u001b[0m" or something similar, depending on AnsiStyle implementation
+        // Typically ends with "\u001b[0m" or something similar, depending on AnsiStyle
+        // implementation
         // We'll do a naive check for 'm' or the reset code.
-        assertTrue(rendered.endsWith(AnsiCodes.RESET), "Should end with the reset code to restore default state")
+        assertTrue(
+            rendered.endsWith(AnsiCodes.RESET),
+            "Should end with the reset code to restore default state",
+        )
     }
 
     @Test
@@ -224,7 +235,7 @@ class AnsiStyledStringTests {
 
     @Test
     fun `test fromArrays constructor`() {
-        val chars = charArrayOf('A','B','C')
+        val chars = charArrayOf('A', 'B', 'C')
         val colors = longArrayOf(0L, 123L, 99999L)
         val s = AnsiStyledString.fromArrays(chars, colors)
 
@@ -240,25 +251,34 @@ class AnsiStyledStringTests {
     /**
      * Test handling of Unicode text.
      *
-     * This test uses accented characters and emoji (which are represented as surrogate pairs)
-     * to ensure that the plainText and length behave as expected.
+     * This test uses accented characters and emoji (which are represented as surrogate pairs) to
+     * ensure that the plainText and length behave as expected.
      *
-     * Note: Since the library operates at the Char-array level,
-     * length equals the number of Char code units rather than user-perceived grapheme clusters.
+     * Note: Since the library operates at the Char-array level, length equals the number of Char
+     * code units rather than user-perceived grapheme clusters.
      */
     @Test
     fun `test unicode handling`() {
-        val raw = "héllo 👋🏼 World" // Contains accented letters and an emoji with skin tone modifier.
+        val raw =
+            "héllo 👋🏼 World" // Contains accented letters and an emoji with skin tone modifier.
         val styled = AnsiStyledString(raw)
-        assertEquals(raw, styled.plainText, "The plain text should match the original Unicode input")
-        assertEquals(raw.length, styled.length, "Length is measured in Char units; surrogate pairs count as two")
+        assertEquals(
+            raw,
+            styled.plainText,
+            "The plain text should match the original Unicode input",
+        )
+        assertEquals(
+            raw.length,
+            styled.length,
+            "Length is measured in Char units; surrogate pairs count as two",
+        )
     }
 
     /**
      * Test behavior when an ANSI escape sequence is incomplete.
      *
-     * In this test the ANSI sequence does not have its terminating character.
-     * When using the Strip error mode, the incomplete escape should be skipped entirely.
+     * In this test the ANSI sequence does not have its terminating character. When using the Strip
+     * error mode, the incomplete escape should be skipped entirely.
      */
     @Test
     fun `test incomplete ansi sequence strip`() {
@@ -271,34 +291,34 @@ class AnsiStyledStringTests {
     /**
      * Test behavior when an ANSI escape sequence is incomplete in Sanitize mode.
      *
-     * In Sanitize mode the escape initiator (e.g. \u001b) is skipped,
-     * leaving the rest of the characters visible.
+     * In Sanitize mode the escape initiator (e.g. \u001b) is skipped, leaving the rest of the
+     * characters visible.
      */
     @Test
     fun `test incomplete ansi sequence sanitize`() {
         val input = "Hello \u001b[31"
         val parsed = AnsiStyledString.parseSanitized(input)
         // Expect that only the ESC character is removed; the remaining "[31" is left intact.
-        assertEquals("Hello [31", parsed.plainText, "Incomplete ANSI sequence should be partially sanitized")
+        assertEquals(
+            "Hello [31",
+            parsed.plainText,
+            "Incomplete ANSI sequence should be partially sanitized",
+        )
     }
 
-    /**
-     * Test that an incomplete ANSI sequence causes an exception in Throw mode.
-     */
+    /** Test that an incomplete ANSI sequence causes an exception in Throw mode. */
     @Test
     fun `test incomplete ansi sequence throws exception`() {
         val input = "Incomplete \u001b[31"
-        assertFailsWith<IllegalArgumentException> {
-            AnsiStyledString.parseOrThrow(input)
-        }
+        assertFailsWith<IllegalArgumentException> { AnsiStyledString.parseOrThrow(input) }
     }
 
     /**
      * Test overlapping style overlays.
      *
-     * This test applies Bold to indices 0..3 and Underlined to indices 2..5.
-     * Since Bold and Underlined are in separate bit categories, the overlapping
-     * region (indices 2 and 3) should have both styles applied.
+     * This test applies Bold to indices 0..3 and Underlined to indices 2..5. Since Bold and
+     * Underlined are in separate bit categories, the overlapping region (indices 2 and 3) should
+     * have both styles applied.
      */
     @Test
     fun `test overlapping styles`() {
@@ -306,28 +326,48 @@ class AnsiStyledStringTests {
         // Define ranges using Kotlin's 'until' operator.
         // Bold applied to indices 0..3 (i.e. characters at positions 0,1,2,3)
         // Underlined applied to indices 2..5 (positions 2,3,4,5)
-        val styled = base.decorate(listOf(
-            (0 until 4) to AnsiStyle.Bold.On,
-            (2 until 6) to AnsiStyle.Underlined.On
-        ))
+        val styled =
+            base.decorate(
+                listOf((0 until 4) to AnsiStyle.Bold.On, (2 until 6) to AnsiStyle.Underlined.On)
+            )
         // For indices 0 and 1: Only Bold should be active.
         for (i in 0 until 2) {
             val color = styled.colorAt(i)
             // Bold: category Bold has offset 0; Bold.On.applyMask should be 1.
-            assertEquals(AnsiStyle.Bold.On.applyMask, color and AnsiStyle.Bold.mask, "Index $i should be bold")
-            assertEquals(0L, color and AnsiStyle.Underlined.mask, "Index $i should not be underlined")
+            assertEquals(
+                AnsiStyle.Bold.On.applyMask,
+                color and AnsiStyle.Bold.mask,
+                "Index $i should be bold",
+            )
+            assertEquals(
+                0L,
+                color and AnsiStyle.Underlined.mask,
+                "Index $i should not be underlined",
+            )
         }
         // For indices 2 and 3: Both Bold and Underlined should be active.
         for (i in 2 until 4) {
             val color = styled.colorAt(i)
-            assertEquals(AnsiStyle.Bold.On.applyMask, color and AnsiStyle.Bold.mask, "Index $i should be bold")
-            assertEquals(AnsiStyle.Underlined.On.applyMask, color and AnsiStyle.Underlined.mask, "Index $i should be underlined")
+            assertEquals(
+                AnsiStyle.Bold.On.applyMask,
+                color and AnsiStyle.Bold.mask,
+                "Index $i should be bold",
+            )
+            assertEquals(
+                AnsiStyle.Underlined.On.applyMask,
+                color and AnsiStyle.Underlined.mask,
+                "Index $i should be underlined",
+            )
         }
         // For indices 4 and 5: Only Underlined should be active.
         for (i in 4 until 6) {
             val color = styled.colorAt(i)
             assertEquals(0L, color and AnsiStyle.Bold.mask, "Index $i should not be bold")
-            assertEquals(AnsiStyle.Underlined.On.applyMask, color and AnsiStyle.Underlined.mask, "Index $i should be underlined")
+            assertEquals(
+                AnsiStyle.Underlined.On.applyMask,
+                color and AnsiStyle.Underlined.mask,
+                "Index $i should be underlined",
+            )
         }
         // For any remaining indices, no style should be applied.
         for (i in 6 until styled.length) {
@@ -339,10 +379,9 @@ class AnsiStyledStringTests {
     /**
      * Test nested style applications via successive decoration.
      *
-     * First, the whole string is decorated with Bold.
-     * Then, a subset of the string (indices 2 until 5) is further decorated with Underlined.
-     * The test verifies that the nested region has both styles,
-     * while the non-overlapped regions retain only Bold.
+     * First, the whole string is decorated with Bold. Then, a subset of the string (indices 2
+     * until 5) is further decorated with Underlined. The test verifies that the nested region has
+     * both styles, while the non-overlapped regions retain only Bold.
      */
     @Test
     fun `test nested styles via successive decoration`() {
@@ -355,19 +394,43 @@ class AnsiStyledStringTests {
         // Indices 2, 3, 4 should have both Bold and Underlined.
         for (i in 2 until 5) {
             val color = nested.colorAt(i)
-            assertEquals(AnsiStyle.Bold.On.applyMask, color and AnsiStyle.Bold.mask, "Index $i should be bold")
-            assertEquals(AnsiStyle.Underlined.On.applyMask, color and AnsiStyle.Underlined.mask, "Index $i should be underlined")
+            assertEquals(
+                AnsiStyle.Bold.On.applyMask,
+                color and AnsiStyle.Bold.mask,
+                "Index $i should be bold",
+            )
+            assertEquals(
+                AnsiStyle.Underlined.On.applyMask,
+                color and AnsiStyle.Underlined.mask,
+                "Index $i should be underlined",
+            )
         }
         // Indices before 2 and after 4 should have Bold only.
         for (i in 0 until 2) {
             val color = nested.colorAt(i)
-            assertEquals(AnsiStyle.Bold.On.applyMask, color and AnsiStyle.Bold.mask, "Index $i should be bold")
-            assertEquals(0L, color and AnsiStyle.Underlined.mask, "Index $i should not be underlined")
+            assertEquals(
+                AnsiStyle.Bold.On.applyMask,
+                color and AnsiStyle.Bold.mask,
+                "Index $i should be bold",
+            )
+            assertEquals(
+                0L,
+                color and AnsiStyle.Underlined.mask,
+                "Index $i should not be underlined",
+            )
         }
         for (i in 5 until nested.length) {
             val color = nested.colorAt(i)
-            assertEquals(AnsiStyle.Bold.On.applyMask, color and AnsiStyle.Bold.mask, "Index $i should be bold")
-            assertEquals(0L, color and AnsiStyle.Underlined.mask, "Index $i should not be underlined")
+            assertEquals(
+                AnsiStyle.Bold.On.applyMask,
+                color and AnsiStyle.Bold.mask,
+                "Index $i should be bold",
+            )
+            assertEquals(
+                0L,
+                color and AnsiStyle.Underlined.mask,
+                "Index $i should not be underlined",
+            )
         }
     }
 }
