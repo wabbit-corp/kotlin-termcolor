@@ -40,18 +40,17 @@ sealed interface AnsiStyle {
                     is Combined -> AnsiStyle(listOf(this) + other.attrs)
                     is Single -> AnsiStyle(listOf(this, other))
                 }
-        }
+    }
 
     companion object {
-        @JvmStatic val Empty = AnsiStyle(emptyList())
+        val Empty = AnsiStyle(emptyList())
 
         /**
          * Represents the removal of all ansi text decoration. Doesn't fit into any convenient
          * category, since it applies to them all.
          */
-        @JvmStatic
         val Reset: AnsiStyle =
-            EscapeAnsiStyle(AnsiCodes.RESET, Long.MAX_VALUE.toLong(), 0, "Escape")
+            EscapeAnsiStyle(AnsiCodes.RESET, Long.MAX_VALUE, 0, "Escape")
 
         /** A list of possible categories */
         val categories = listOf(ForegroundColor, BackgroundColor, Bold, Underlined, Reversed)
@@ -133,6 +132,7 @@ sealed interface AnsiStyle {
         }
     }
 
+    @ConsistentCopyVisibility
     private data class Combined
     internal constructor(
         override val resetMask: Long,

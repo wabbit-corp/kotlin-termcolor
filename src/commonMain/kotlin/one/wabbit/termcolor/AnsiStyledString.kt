@@ -1,7 +1,5 @@
 package one.wabbit.termcolor
 
-import java.util.Arrays
-
 typealias EncodedAnsiStyle = Long
 
 /**
@@ -40,7 +38,7 @@ internal constructor(private val chars: CharArray, private val colors: LongArray
      *
      * @return The plain-text string.
      */
-    val plainText by lazy { String(chars) }
+    val plainText by lazy { chars.concatToString() }
 
     /**
      * Returns the color of the string at the specified index.
@@ -55,14 +53,14 @@ internal constructor(private val chars: CharArray, private val colors: LongArray
      *
      * @return A copy of the color array.
      */
-    fun colors(): LongArray = colors.clone()
+    fun colors(): LongArray = colors.copyOf()
 
     /**
      * Returns a copy of the character array backing this string.
      *
      * @return A copy of the character array.
      */
-    fun chars(): CharArray = chars.clone()
+    fun chars(): CharArray = chars.copyOf()
 
     /**
      * Returns the character at the specified index.
@@ -90,10 +88,10 @@ internal constructor(private val chars: CharArray, private val colors: LongArray
     operator fun plus(other: AnsiStyledString): AnsiStyledString {
         val chars2 = CharArray(length + other.length)
         val colors2 = LongArray(length + other.length)
-        System.arraycopy(chars, 0, chars2, 0, length)
-        System.arraycopy(other.chars, 0, chars2, length, other.length)
-        System.arraycopy(colors, 0, colors2, 0, length)
-        System.arraycopy(other.colors, 0, colors2, length, other.length)
+        chars.copyInto(chars2, endIndex = length)
+        other.chars.copyInto(chars2, destinationOffset = length)
+        colors.copyInto(colors2, endIndex = length)
+        other.colors.copyInto(colors2, destinationOffset = length)
         return AnsiStyledString(chars2, colors2)
     }
 
@@ -107,13 +105,13 @@ internal constructor(private val chars: CharArray, private val colors: LongArray
         require(index in 0..length) { "split index [$index] must be between 0 and length:$length" }
         val left =
             AnsiStyledString(
-                Arrays.copyOfRange(chars, 0, index),
-                Arrays.copyOfRange(colors, 0, index),
+                chars.copyOfRange(0, index),
+                colors.copyOfRange(0, index),
             )
         val right =
             AnsiStyledString(
-                Arrays.copyOfRange(chars, index, length),
-                Arrays.copyOfRange(colors, index, length),
+                chars.copyOfRange(index, length),
+                colors.copyOfRange(index, length),
             )
         return Pair(left, right)
     }
@@ -133,8 +131,8 @@ internal constructor(private val chars: CharArray, private val colors: LongArray
             "substring end parameter [$end] must be between start $start and length:$length"
         }
         return AnsiStyledString(
-            Arrays.copyOfRange(chars, start, end),
-            Arrays.copyOfRange(colors, start, end),
+            chars.copyOfRange(start, end),
+            colors.copyOfRange(start, end),
         )
     }
 
@@ -204,7 +202,7 @@ internal constructor(private val chars: CharArray, private val colors: LongArray
      * The input sequence of overlay-tuples is applied from left to right
      */
     fun decorate(overlays: List<Pair<IntRange, AnsiStyle>>): AnsiStyledString {
-        val colorsOut = colors.clone()
+        val colorsOut = colors.copyOf()
         for (value in overlays) {
             val (range, attrs) = value
             val start = range.first
@@ -390,7 +388,7 @@ internal constructor(private val chars: CharArray, private val colors: LongArray
                             var value = 0
                             var count = 0
                             while (isDigit(sourceIndex) && count < 3) {
-                                value = value * 10 + (raw[sourceIndex] - '0').toInt()
+                                value = value * 10 + (raw[sourceIndex] - '0')
                                 sourceIndex += 1
                                 count += 1
                             }
@@ -455,8 +453,8 @@ internal constructor(private val chars: CharArray, private val colors: LongArray
             }
 
             return AnsiStyledString(
-                Arrays.copyOfRange(chars, 0, destIndex),
-                Arrays.copyOfRange(colors, 0, destIndex),
+                chars.copyOfRange(0, destIndex),
+                colors.copyOfRange(0, destIndex),
             )
         }
 
@@ -468,7 +466,7 @@ internal constructor(private val chars: CharArray, private val colors: LongArray
          * @return A new string created from the arrays.
          */
         fun fromArrays(chars: CharArray, colors: LongArray): AnsiStyledString =
-            AnsiStyledString(chars.clone(), colors.clone())
+            AnsiStyledString(chars.copyOf(), colors.copyOf())
 
         /**
          * Joins multiple strings into a single string with an optional separator.

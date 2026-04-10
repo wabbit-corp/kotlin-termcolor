@@ -8,13 +8,7 @@ import kotlin.test.assertTrue
 
 class AnsiStyledStringTests {
     private inline fun <reified E : Throwable> assertThrows(block: () -> Unit) {
-        try {
-            block()
-        } catch (e: Throwable) {
-            if (e is E) return
-            throw e
-        }
-        throw AssertionError("Expected exception of type ${E::class.java}")
+        assertFailsWith<E> { block() }
     }
 
     @Test
